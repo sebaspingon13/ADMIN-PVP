@@ -83,8 +83,10 @@
   <!-- LOGIN ADMIN -->
   <div id="view-login">
     <h2>Acceso Administrador PVP</h2>
-    <input type="email" id="admin-email" placeholder="Correo electrónico admin">
-    <input type="password" id="admin-password" placeholder="Contraseña">
+    <label>CORREO ELECTRÓNICO</label>
+    <input type="email" id="admin-email" placeholder="admin@tutorneo.com">
+    <label>CONTRASEÑA</label>
+    <input type="password" id="admin-password" placeholder="••••••••">
     <button onclick="AdminApp.login()">INGRESAR AL PANEL</button>
   </div>
 
@@ -134,7 +136,6 @@
           this.cargarPanel();
         }
 
-        // Realtime para enterarse si hay cambios en las inscripciones de los duelos
         db.channel('admin-channel')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'inscripciones' }, (payload) => {
             if (payload.eventType === 'INSERT') {
@@ -148,10 +149,10 @@
       },
 
       async login() {
-        const email = document.getElementById('admin-email').value;
-        const password = document.getElementById('admin-password').value;
+        const email = document.getElementById('admin-email').value.trim();
+        const password = document.getElementById('admin-password').value.trim();
         const { error } = await db.auth.signInWithPassword({ email, password });
-        if (error) return alert("Error: " + error.message);
+        if (error) return alert("Error de acceso: " + error.message);
         
         document.getElementById('view-login').classList.add('hidden');
         document.getElementById('view-admin').classList.remove('hidden');
