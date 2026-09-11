@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Administrador - Torneo Free Fire PVP</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Rajdhani:wght@500;600;700&display=swap');
+
+    :root {
+      --bg: #050308;
+      --card-bg: rgba(16, 10, 24, 0.92);
+      --primary: #b537f2;
+      --primary-light: #d68bff;
+      --text: #ffffff;
+      --subtext: #a99cc2;
+      --border: rgba(181, 55, 242, 0.18);
+      --success: #00f2c3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Rajdhani', sans-serif;
+      background: radial-gradient(circle at top, #170c22 0%, #020103 70%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 20px 15px;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 860px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      padding: 26px;
+      border-radius: 20px;
+      border: 1px solid rgba(181, 55, 242, 0.35);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85);
+    }
+
+    h2 { font-family: 'Teko', sans-serif; text-align: center; color: var(--primary-light); font-size: 36px; margin: 0 0 15px; letter-spacing: 1px; }
+
+    label { display: block; margin-bottom: 6px; font-size: 12px; color: var(--subtext); font-weight: 700; }
+    input {
+      width: 100%; padding: 10px; margin-bottom: 12px;
+      background: rgba(5, 3, 8, 0.85); border: 1px solid var(--border);
+      color: white; border-radius: 8px; font-family: 'Rajdhani', sans-serif;
+    }
+    input:focus { outline: none; border-color: var(--primary); }
+
+    button {
+      width: 100%; padding: 10px; background: var(--primary);
+      border: none; color: white; font-family: 'Teko', sans-serif; font-size: 18px;
+      border-radius: 8px; cursor: pointer; text-transform: uppercase;
+    }
+
+    .admin-card {
+      background: rgba(181, 55, 242, 0.08);
+      padding: 14px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border);
+    }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+    th, td { padding: 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+    th { color: var(--primary-light); text-transform: uppercase; font-size: 11px; font-family: 'Teko', sans-serif; letter-spacing: 1px; }
+    
+    .status-badge { padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; margin-bottom: 2px; }
+    .badge-pending { background: #ffb703; color: #000; }
+    .badge-paid { background: var(--success); color: #000; }
+    .badge-empty { background: #2d3748; color: #a0aec0; }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- LOGIN ADMIN -->
+  <div id="view-login">
+    <h2>Acceso Administrador PVP</h2>
+    <input type="email" id="admin-email" placeholder="Correo electrónico admin">
+    <input type="password" id="admin-password" placeholder="Contraseña">
+    <button onclick="AdminApp.login()">INGRESAR AL PANEL</button>
+  </div>
+
+  <!-- PANEL DE CONTROL -->
+  <div id="view-admin" class="hidden">
+    <h2>Panel de Administración - Duelos 1v1</h2>
+
+    <div class="admin-card">
+      <label>ACTUALIZAR CREDENCIALES DE SALA EN VIVO (Para duelos completos y pagados):</label>
+      <input type="text" id="admin-room-id" placeholder="ID de la Sala">
+      <input type="text" id="admin-room-pass" placeholder="Contraseña de la Sala">
+      <button onclick="AdminApp.actualizarSala()" style="background:#00f2fe; color:#000;">GUARDAR Y ACTUALIZAR A JUGADORES</button>
+    </div>
+
+    <button onclick="AdminApp.logout()" style="background:#232736; margin-bottom:15px; width:auto; padding:6px 14px; font-size:14px;">Cerrar Sesión Admin</button>
+    
+    <h3 style="font-family:'Teko'; font-size:22px; margin:10px 0 0;">Gestión de Duelos 1v1 (10 Casillas en Tiempo Real)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Duelo</th>
+          <th>Jugador 1 (Creador)</th>
+          <th>Jugador 2 (Rival)</th>
+          <th>Estado / Pagos</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-admin"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://eaqagfaarjsonclcpahd.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhcWFnZmFhcmpzb25jbGNwYWhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzODc2NDIsImV4cCI6MjEwMzk2MzY0Mn0.-9b9qzfJ4oZANgQdLTy2vYTMbfj1ffiTEVrQY-QSYPs';
+
+  const AdminApp = (() => {
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    return {
+      async init() {
+        const { data: { session } } = await db.auth.getSession();
+        if (session) {
+          document.getElementById('view-login').classList.add('hidden');
+          document.getElementById('view-admin').classList.remove('hidden');
+          this.cargarPanel();
+        }
+
+        // Realtime para enterarse si hay cambios en las inscripciones de los duelos
+        db.channel('admin-channel')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'inscripciones' }, (payload) => {
+            if (payload.eventType === 'INSERT') {
+              alert(`🚨 NUEVO DUELO: Se creó el Duelo #${payload.new.numero_casilla} por ${payload.new.j1_apodo}.`);
+            } else if (payload.eventType === 'UPDATE' && payload.new.j2_apodo && !payload.old.j2_apodo) {
+              alert(`⚔️ NUEVO RIVAL: ${payload.new.j2_apodo} se unió al Duelo #${payload.new.numero_casilla}.`);
+            }
+            this.cargarPanel();
+          })
+          .subscribe();
+      },
+
+      async login() {
+        const email = document.getElementById('admin-email').value;
+        const password = document.getElementById('admin-password').value;
+        const { error } = await db.auth.signInWithPassword({ email, password });
+        if (error) return alert("Error: " + error.message);
+        
+        document.getElementById('view-login').classList.add('hidden');
+        document.getElementById('view-admin').classList.remove('hidden');
+        this.cargarPanel();
+      },
+
+      async cargarPanel() {
+        const { data: config } = await db.from('configuracion_admin').select('*').eq('id', 1).maybeSingle();
+        if (config) {
+          document.getElementById('admin-room-id').value = config.room_id === 'Por definir' ? '' : config.room_id;
+          document.getElementById('admin-room-pass').value = config.room_pass === 'Por definir' ? '' : config.room_pass;
+        }
+
+        const { data: inscripciones } = await db.from('inscripciones').select('*');
+        const tbody = document.getElementById('tabla-admin');
+        tbody.innerHTML = '';
+
+        for (let i = 1; i <= 10; i++) {
+          const reg = inscripciones ? inscripciones.find(item => item.numero_casilla === i) : null;
+          
+          if (!reg) {
+            tbody.innerHTML += `<tr><td><b>#${i}</b></td><td colspan="3" style="color:var(--subtext);">Duelo vacío / Disponible</td><td>-</td></tr>`;
+            continue;
+          }
+
+          const badgeJ1 = reg.j1_pago_confirmado ? '<span class="status-badge badge-paid">J1 OK</span>' : '<span class="status-badge badge-pending">J1 PENDIENTE</span>';
+          const badgeJ2 = reg.j2_apodo ? (reg.j2_pago_confirmado ? '<span class="status-badge badge-paid">J2 OK</span>' : '<span class="status-badge badge-pending">J2 PENDIENTE</span>') : '<span class="status-badge badge-empty">SIN RIVAL</span>';
+
+          tbody.innerHTML += `
+            <tr>
+              <td><b>#${i}</b></td>
+              <td>
+                <b>${reg.j1_apodo}</b><br>
+                <small>ID: ${reg.j1_id} | WSP: ${reg.j1_wsp}</small><br>
+                <small>Yape: <code>${reg.j1_nro_operacion}</code></small>
+              </td>
+              <td>
+                ${reg.j2_apodo ? `
+                  <b>${reg.j2_apodo}</b><br>
+                  <small>ID: ${reg.j2_id} | WSP: ${reg.j2_wsp}</small><br>
+                  <small>Yape: <code>${reg.j2_nro_operacion}</code></small>
+                ` : '<span style="color:var(--subtext);">Esperando oponente...</span>'}
+              </td>
+              <td>
+                ${badgeJ1}<br>${badgeJ2}
+              </td>
+              <td>
+                ${!reg.j1_pago_confirmado ? `<button onclick="AdminApp.confirmarPago(${reg.id}, 'j1')" style="background:var(--success); color:#000; padding:4px 8px; font-size:11px; margin-bottom:3px;">Confirmar J1</button><br>` : ''}
+                ${reg.j2_apodo && !reg.j2_pago_confirmado ? `<button onclick="AdminApp.confirmarPago(${reg.id}, 'j2')" style="background:var(--success); color:#000; padding:4px 8px; font-size:11px; margin-bottom:3px;">Confirmar J2</button><br>` : ''}
+                <button onclick="AdminApp.expulsar(${reg.id})" style="background:#d9534f; padding:4px 8px; font-size:11px;">Eliminar Duelo</button>
+              </td>
+            </tr>
+          `;
+        }
+      },
+
+      async actualizarSala() {
+        const room_id = document.getElementById('admin-room-id').value.trim() || 'Por definir';
+        const room_pass = document.getElementById('admin-room-pass').value.trim() || 'Por definir';
+        
+        await db.from('configuracion_admin').update({ room_id, room_pass }).eq('id', 1);
+        alert("✅ Credenciales de sala actualizadas y enviadas a los jugadores confirmados.");
+      },
+
+      async confirmarPago(id, rol) {
+        const payload = rol === 'j1' ? { j1_pago_confirmado: true } : { j2_pago_confirmado: true };
+        await db.from('inscripciones').update(payload).eq('id', id);
+        alert(`✅ Pago de ${rol.toUpperCase()} confirmado correctamente.`);
+        this.cargarPanel();
+      },
+
+      async expulsar(id) {
+        if (confirm("¿Estás seguro de eliminar este duelo por completo? Se liberarán ambos espacios.")) {
+          await db.from('inscripciones').delete().eq('id', id);
+          this.cargarPanel();
+        }
+      },
+
+      async logout() {
+        await db.auth.signOut();
+        window.location.reload();
+      }
+    };
+  })();
+
+  document.addEventListener('DOMContentLoaded', () => AdminApp.init());
+</script>
+</body>
+</html>
