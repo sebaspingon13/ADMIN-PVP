@@ -72,26 +72,14 @@
     .badge-pending { background: #ffb703; color: #000; }
     .badge-paid { background: var(--success); color: #000; }
     .badge-empty { background: #2d3748; color: #a0aec0; }
-    
-    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
 <div class="container">
 
-  <!-- LOGIN ADMIN -->
-  <div id="view-login">
-    <h2>Acceso Administrador PVP</h2>
-    <label>CORREO ELECTRÓNICO</label>
-    <input type="email" id="admin-email" placeholder="admin@tutorneo.com">
-    <label>CONTRASEÑA</label>
-    <input type="password" id="admin-password" placeholder="••••••••">
-    <button onclick="AdminApp.login()">INGRESAR AL PANEL</button>
-  </div>
-
-  <!-- PANEL DE CONTROL -->
-  <div id="view-admin" class="hidden">
+  <!-- PANEL DE CONTROL DIRECTO (SIN LOGIN) -->
+  <div id="view-admin">
     <h2>Panel de Administración - Duelos 1v1</h2>
 
     <div class="admin-card">
@@ -100,8 +88,6 @@
       <input type="text" id="admin-room-pass" placeholder="Contraseña de la Sala">
       <button onclick="AdminApp.actualizarSala()" style="background:#00f2fe; color:#000;">GUARDAR Y ACTUALIZAR A JUGADORES</button>
     </div>
-
-    <button onclick="AdminApp.logout()" style="background:#232736; margin-bottom:15px; width:auto; padding:6px 14px; font-size:14px;">Cerrar Sesión Admin</button>
     
     <h3 style="font-family:'Teko'; font-size:22px; margin:10px 0 0;">Gestión de Duelos 1v1 (10 Casillas en Tiempo Real)</h3>
     <table>
@@ -128,13 +114,8 @@
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     return {
-      async init() {
-        const { data: { session } } = await db.auth.getSession();
-        if (session) {
-          document.getElementById('view-login').classList.add('hidden');
-          document.getElementById('view-admin').classList.remove('hidden');
-          this.cargarPanel();
-        }
+      init() {
+        this.cargarPanel();
 
         db.channel('admin-channel')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'inscripciones' }, (payload) => {
@@ -146,17 +127,6 @@
             this.cargarPanel();
           })
           .subscribe();
-      },
-
-      async login() {
-        const email = document.getElementById('admin-email').value.trim();
-        const password = document.getElementById('admin-password').value.trim();
-        const { error } = await db.auth.signInWithPassword({ email, password });
-        if (error) return alert("Error de acceso: " + error.message);
-        
-        document.getElementById('view-login').classList.add('hidden');
-        document.getElementById('view-admin').classList.remove('hidden');
-        this.cargarPanel();
       },
 
       async cargarPanel() {
@@ -229,11 +199,6 @@
           await db.from('inscripciones').delete().eq('id', id);
           this.cargarPanel();
         }
-      },
-
-      async logout() {
-        await db.auth.signOut();
-        window.location.reload();
       }
     };
   })();
