@@ -128,29 +128,31 @@
 
   const AdminApp = (() => {
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let cacheInscripciones = [];
 
     return {
-      init() {
-        this.cargarPanel();
+      async init() {
+        await this.cargarPanel();
 
         db.channel('admin-channel')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'inscripciones' }, () => {
-            this.cargarPanel();
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'inscripciones' }, async () => {
+            await this.cargarPanel();
           })
           .subscribe();
 
         document.getElementById('admin-sala-select').addEventListener('change', (e) => {
-          this.cargarCredencialesSalaSeleccionada(e.target.value);
+          this.pintarCredencialesEnInputs(e.target.value);
         });
       },
 
       async cargarPanel() {
-        const { data: inscripciones } = await db.from('inscripciones').select('*');
+        const { data } = await db.from('inscripciones').select('*');
+        cacheInscripciones = data || [];
         const tbody = document.getElementById('tabla-admin');
         tbody.innerHTML = '';
 
         for (let i = 1; i <= 10; i++) {
-          const reg = inscripciones ? inscripciones.find(item => item.numero_casilla === i) : null;
+          const reg = cacheInscripciones.find(item => item.numero_casilla === i);
           
           if (!reg) {
             tbody.innerHTML += `<tr><td><b>#${i}</b></td><td colspan="3" style="color:var(--subtext);">Duelo vacío / Disponible</td><td>-</td></tr>`;
@@ -188,20 +190,18 @@
         }
 
         const salaActual = document.getElementById('admin-sala-select').value;
-        this.cargarCredencialesSalaSeleccionada(salaActual, inscripciones);
+        this.pintarCredencialesEnInputs(salaActual);
       },
 
-      async cargarCredencialesSalaSeleccionada(numCasilla, inscripcionesCache = null) {
-        let inscripciones = inscripcionesCache;
-        if (!inscripciones) {
-          const { data } = await db.from('inscripciones').select('*');
-          inscripciones = data || [];
-        }
+      pintarCredencialesInInputs(numCasilla) {
+        // Método interno puente
+      },
 
-        const reg = inscripciones.find(item => item.numero_casilla === parseInt(numCasilla));
+      pintarCredencialesEnInputs(numCasilla) {
+        const reg = cacheInscripciones.find(item => item.numero_casilla === parseInt(numCasilla));
         if (reg) {
-          document.getElementById('admin-room-id').value = reg.room_id && reg.room_id !== 'Por definir' ? reg.room_id : '';
-          document.getElementById('admin-room-pass').value = reg.room_pass && reg.room_pass !== 'Por definir' ? reg.room_pass : '';
+          document.getElementById('admin-room-id').value = (reg.room_id && reg.room_id !== 'Por definir') ? reg.room_id : '';
+          document.getElementById('admin-room-pass').value = (reg.room_pass && reg.room_pass !== 'Por definir') ? reg.room_pass : '';
         } else {
           document.getElementById('admin-room-id').value = '';
           document.getElementById('admin-room-pass').value = '';
@@ -213,28 +213,30 @@
         const room_id = document.getElementById('admin-room-id').value.trim() || 'Por definir';
         const room_pass = document.getElementById('admin-room-pass').value.trim() || 'Por definir';
         
-        const { data: reg } = await db.from('inscripciones').select('id').eq('numero_casilla', numCasilla).maybeSingle();
+        const reg = cacheInscripciones.find(item => item.numero_casilla === numCasilla);
         
         if (!reg) {
           return alert(`⚠️ El Duelo #${numCasilla} aún no ha sido creado por ningún jugador. No se pueden asignar credenciales todavía.`);
         }
 
-        await db.from('inscripciones').update({ room_id, room_pass }).eq('id', reg.id);
-        alert(`✅ Credenciales actualizadas correctamente para el Duelo #${numCasilla}.`);
-        this.cargarPanel();
+        const { error } = await db.from('inscripciones').update({ room_id, room_pass }).eq('id', reg.id);
+        if (error) return alert("Error: " + error.message);
+
+        alert(`✅ Credenciales guardadas permanentemente para el Duelo #${numCasilla}.`);
+        await this.cargarPanel();
       },
 
       async confirmarPago(id, rol) {
         const payload = rol === 'j1' ? { j1_pago_confirmado: true } : { j2_pago_confirmado: true };
         await db.from('inscripciones').update(payload).eq('id', id);
         alert(`✅ Pago de ${rol.toUpperCase()} confirmado correctamente.`);
-        this.cargarPanel();
+        await this.cargarPanel();
       },
 
       async expulsar(id) {
         if (confirm("¿Estás seguro de eliminar este duelo por completo? Se liberarán ambos espacios.")) {
           await db.from('inscripciones').delete().eq('id', id);
-          this.cargarPanel();
+          await this.cargarPanel();
         }
       }
     };
