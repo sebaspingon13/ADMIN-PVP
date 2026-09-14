@@ -1,17 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Panel Administrador - Torneo Free Fire</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
 @import url('https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Rajdhani:wght@500;600;700&display=swap');
 
 :root{
@@ -22,282 +18,156 @@
     --border:rgba(181,55,242,.18);
 }
 
-*{
-    box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
-
     margin:0;
-
     font-family:'Rajdhani',sans-serif;
-
-    background:
-    radial-gradient(
-        circle at top,
-        #170c22 0%,
-        #020103 70%
-    );
-
+    background:radial-gradient(circle at top,#170c22 0%,#020103 70%);
     color:white;
-
     display:flex;
-
     justify-content:center;
-
     padding:20px;
-
     min-height:100vh;
 }
 
 .container{
-
     width:100%;
-
     max-width:1000px;
-
     background:rgba(16,10,24,.94);
-
     padding:26px;
-
     border-radius:20px;
-
     border:1px solid rgba(181,55,242,.35);
-
-    box-shadow:
-    0 20px 60px rgba(0,0,0,.85);
-
+    box-shadow:0 20px 60px rgba(0,0,0,.85);
 }
 
 h1{
-
     font-family:'Teko',sans-serif;
-
     text-align:center;
-
     color:var(--primary-light);
-
     font-size:38px;
-
     margin:0 0 20px;
-
 }
 
 .admin-card{
-
     background:rgba(181,55,242,.08);
-
     padding:18px;
-
     border-radius:12px;
-
     border:1px solid var(--border);
-
     margin-bottom:25px;
-
 }
 
 label{
-
     display:block;
-
     color:var(--subtext);
-
     font-size:12px;
-
     font-weight:bold;
-
     margin-bottom:5px;
-
 }
 
-input,
-select{
-
+input,select{
     width:100%;
-
     padding:11px;
-
     margin-bottom:12px;
-
     background:#08050b;
-
     color:white;
-
     border:1px solid var(--border);
-
     border-radius:8px;
-
 }
 
 button{
-
     width:100%;
-
     padding:10px;
-
     border:none;
-
     border-radius:8px;
-
     color:white;
-
     font-family:'Teko',sans-serif;
-
     font-size:17px;
-
     cursor:pointer;
-
 }
 
 .btn-save{
-
     background:#00f2fe;
-
     color:#000;
-
 }
 
 .btn-confirm{
-
     background:var(--success);
-
     color:#000;
-
     margin-bottom:5px;
-
 }
 
 .btn-delete{
-
     background:#d9534f;
-
 }
 
 table{
-
     width:100%;
-
     border-collapse:collapse;
-
     font-size:13px;
-
 }
 
-th,
-td{
-
+th,td{
     padding:10px;
-
     border-bottom:1px solid var(--border);
-
     text-align:left;
-
     vertical-align:middle;
-
 }
 
 th{
-
     color:var(--primary-light);
-
     font-family:'Teko',sans-serif;
-
     font-size:13px;
-
 }
 
 .badge{
-
     display:inline-block;
-
     padding:4px 7px;
-
     border-radius:5px;
-
     font-size:10px;
-
     font-weight:bold;
-
     margin-bottom:3px;
-
 }
 
 .pending{
-
     background:#ffb703;
-
     color:#000;
-
 }
 
 .paid{
-
     background:var(--success);
-
     color:#000;
-
 }
 
 .empty{
-
     background:#2d3748;
-
     color:#aaa;
-
 }
 
 .room{
-
     color:var(--success);
-
     font-size:12px;
-
 }
 
 @media(max-width:700px){
-
-    .container{
-        padding:15px;
-    }
-
-    table{
-        font-size:11px;
-    }
-
-    th,
-    td{
-        padding:7px;
-    }
-
+    .container{padding:15px}
+    table{font-size:11px}
+    th,td{padding:7px}
 }
-
 </style>
-
 </head>
-
 
 <body>
 
 <div class="container">
 
-<h1>
-Panel Administrador - Duelos 1v1
-</h1>
-
-
-<!-- ================================================= -->
-<!-- CONFIGURAR SALA -->
-<!-- ================================================= -->
+<h1>Panel Administrador - Duelos 1v1</h1>
 
 <div class="admin-card">
 
-<label>
-SELECCIONAR DUELO / SALA
-</label>
+<label>SELECCIONAR DUELO / SALA</label>
 
 <select id="admin-sala-select">
-
 <option value="1">Duelo #1</option>
 <option value="2">Duelo #2</option>
 <option value="3">Duelo #3</option>
@@ -308,134 +178,73 @@ SELECCIONAR DUELO / SALA
 <option value="8">Duelo #8</option>
 <option value="9">Duelo #9</option>
 <option value="10">Duelo #10</option>
-
 </select>
 
+<label>ID DE SALA</label>
 
-<label>
-ID DE SALA
-</label>
+<input id="admin-room-id" placeholder="Ej: 1234567">
 
-<input
-id="admin-room-id"
-placeholder="Ej: 1234567"
->
+<label>CONTRASEÑA DE SALA</label>
 
+<input id="admin-room-pass" placeholder="Ej: ABC123">
 
-<label>
-CONTRASEÑA DE SALA
-</label>
-
-<input
-id="admin-room-pass"
-placeholder="Ej: ABC123"
->
-
-
-<button
-class="btn-save"
-onclick="AdminApp.guardarSala()">
-
+<button class="btn-save" onclick="AdminApp.guardarSala()">
 GUARDAR CREDENCIALES
-
 </button>
 
 </div>
 
-
-<!-- ================================================= -->
-<!-- TABLA -->
-<!-- ================================================= -->
-
-<h2
-style="
-font-family:'Teko';
-font-size:25px;
-">
-
+<h2 style="font-family:'Teko';font-size:25px;">
 Gestión de Duelos
-
 </h2>
 
-
 <table>
-
 <thead>
-
 <tr>
-
 <th>Duelo</th>
-
 <th>Jugador 1</th>
-
 <th>Jugador 2</th>
-
 <th>Pagos</th>
-
 <th>Acciones</th>
-
 </tr>
-
 </thead>
 
-
 <tbody id="tabla-admin">
-
 <tr>
-
-<td colspan="5">
-Cargando...
-</td>
-
+<td colspan="5">Cargando...</td>
 </tr>
-
 </tbody>
-
 </table>
 
-
 </div>
-
 
 <script>
 
 const SUPABASE_URL =
 'https://eaqagfaarjsonclcpahd.supabase.co';
 
-
 const SUPABASE_KEY =
-'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFhZ2Fhcmpzb25jbGNwYWhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzODc2NDIsImV4cCI6MjEwMzk2MzY0Mn0.-9b9qzfJ4oZANgQdLTy2vYTMbfj1ffiTEVrQY-QSYPs';
+'sb_publishable_FHr2wWeE-0jQK44Y86o_7g_iiiWyMqk';
 
-
-const db =
-window.supabase.createClient(
+const db = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
-
 
 const AdminApp = {
 
     salas:[],
     inscripciones:[],
 
-
     async init(){
 
         await this.cargarTodo();
 
-
         document
         .getElementById('admin-sala-select')
-        .addEventListener(
-            'change',
-            e=>{
-                this.mostrarSala(
-                    Number(e.target.value)
-                );
-            }
-        );
-
+        .addEventListener('change',e=>{
+            this.mostrarSala(Number(e.target.value));
+        });
 
         db.channel('admin-tiempo-real')
 
@@ -464,9 +273,7 @@ const AdminApp = {
         )
 
         .subscribe();
-
     },
-
 
     async cargarTodo(){
 
@@ -484,521 +291,314 @@ const AdminApp = {
             .from('inscripciones')
             .select('*')
             .order('numero_casilla')
-
         ]);
 
-
         if(salasResult.error){
-
             alert(
                 'Error cargando salas: '+
                 salasResult.error.message
             );
-
             return;
-
         }
 
-
         if(inscripcionesResult.error){
-
             alert(
                 'Error cargando inscripciones: '+
                 inscripcionesResult.error.message
             );
-
             return;
-
         }
 
-
-        this.salas =
-        salasResult.data || [];
-
-
-        this.inscripciones =
-        inscripcionesResult.data || [];
-
+        this.salas = salasResult.data || [];
+        this.inscripciones = inscripcionesResult.data || [];
 
         this.pintarTabla();
 
-
         const salaSeleccionada =
-        Number(
-            document
-            .getElementById('admin-sala-select')
-            .value
-        );
+            Number(
+                document
+                .getElementById('admin-sala-select')
+                .value
+            );
 
-
-        this.mostrarSala(
-            salaSeleccionada
-        );
-
+        this.mostrarSala(salaSeleccionada);
     },
-
 
     mostrarSala(numero){
 
         const sala =
-        this.salas.find(
-            x =>
-            Number(x.numero_casilla)===numero
-        );
+            this.salas.find(
+                x=>Number(x.numero_casilla)===numero
+            );
 
+        document.getElementById('admin-room-id').value =
+            sala?.room_id &&
+            sala.room_id !== 'Por definir'
+            ? sala.room_id
+            : '';
 
-        document
-        .getElementById('admin-room-id')
-        .value =
-        sala?.room_id &&
-        sala.room_id !== 'Por definir'
-        ? sala.room_id
-        : '';
-
-
-        document
-        .getElementById('admin-room-pass')
-        .value =
-        sala?.room_pass &&
-        sala.room_pass !== 'Por definir'
-        ? sala.room_pass
-        : '';
-
+        document.getElementById('admin-room-pass').value =
+            sala?.room_pass &&
+            sala.room_pass !== 'Por definir'
+            ? sala.room_pass
+            : '';
     },
-
 
     async guardarSala(){
 
         const numero =
-        Number(
-            document
-            .getElementById('admin-sala-select')
-            .value
-        );
-
-
-        const room_id =
-        document
-        .getElementById('admin-room-id')
-        .value
-        .trim();
-
-
-        const room_pass =
-        document
-        .getElementById('admin-room-pass')
-        .value
-        .trim();
-
-
-        if(!room_id || !room_pass){
-
-            alert(
-                'Debes ingresar el ID y la contraseña.'
+            Number(
+                document
+                .getElementById('admin-sala-select')
+                .value
             );
 
-            return;
+        const room_id =
+            document
+            .getElementById('admin-room-id')
+            .value
+            .trim();
 
+        const room_pass =
+            document
+            .getElementById('admin-room-pass')
+            .value
+            .trim();
+
+        if(!room_id || !room_pass){
+            alert('Debes ingresar el ID y la contraseña.');
+            return;
         }
 
-
         const {error} =
-        await db
-        .from('salas')
-        .update({
-
-            room_id,
-            room_pass,
-            updated_at:new Date().toISOString()
-
-        })
-        .eq(
-            'numero_casilla',
-            numero
-        );
-
+            await db
+            .from('salas')
+            .update({
+                room_id,
+                room_pass,
+                updated_at:new Date().toISOString()
+            })
+            .eq('numero_casilla',numero);
 
         if(error){
-
             alert(
                 'Error guardando sala: '+
                 error.message
             );
-
             return;
-
         }
-
 
         alert(
             `✅ Credenciales guardadas para el Duelo #${numero}`
         );
 
-
         await this.cargarTodo();
-
     },
-
 
     pintarTabla(){
 
         const tbody =
-        document
-        .getElementById('tabla-admin');
-
+            document.getElementById('tabla-admin');
 
         tbody.innerHTML='';
-
 
         for(let i=1;i<=10;i++){
 
             const reg =
-            this.inscripciones.find(
-                x =>
-                Number(x.numero_casilla)===i
-            );
-
+                this.inscripciones.find(
+                    x=>Number(x.numero_casilla)===i
+                );
 
             const sala =
-            this.salas.find(
-                x =>
-                Number(x.numero_casilla)===i
-            );
-
+                this.salas.find(
+                    x=>Number(x.numero_casilla)===i
+                );
 
             const room =
-            sala?.room_id || 'Por definir';
-
+                sala?.room_id || 'Por definir';
 
             if(!reg){
 
                 tbody.innerHTML += `
-
                 <tr>
-
                     <td>
-
                         <b>#${i}</b>
-
                         <br>
-
                         <span class="room">
-
-                        Sala: ${this.escape(room)}
-
+                            Sala: ${this.escape(room)}
                         </span>
-
                     </td>
 
                     <td colspan="3">
-
                         <span class="empty">
-
-                        SIN JUGADORES
-
+                            SIN JUGADORES
                         </span>
-
                     </td>
 
-                    <td>
-                        -
-                    </td>
-
+                    <td>-</td>
                 </tr>
-
                 `;
 
                 continue;
-
             }
 
-
-            const j1Pago =
-            reg.j1_pago_confirmado;
-
-
-            const j2Pago =
-            reg.j2_pago_confirmado;
-
+            const j1Pago = reg.j1_pago_confirmado;
+            const j2Pago = reg.j2_pago_confirmado;
 
             const j1Badge =
-            j1Pago
-            ?
-            '<span class="badge paid">J1 OK</span>'
-            :
-            '<span class="badge pending">J1 PENDIENTE</span>';
-
+                j1Pago
+                ? '<span class="badge paid">J1 OK</span>'
+                : '<span class="badge pending">J1 PENDIENTE</span>';
 
             const j2Badge =
-            !reg.j2_apodo
-            ?
-            '<span class="badge empty">SIN RIVAL</span>'
-            :
-            (
-                j2Pago
-                ?
-                '<span class="badge paid">J2 OK</span>'
-                :
-                '<span class="badge pending">J2 PENDIENTE</span>'
-            );
-
+                !reg.j2_apodo
+                ? '<span class="badge empty">SIN RIVAL</span>'
+                : (
+                    j2Pago
+                    ? '<span class="badge paid">J2 OK</span>'
+                    : '<span class="badge pending">J2 PENDIENTE</span>'
+                );
 
             tbody.innerHTML += `
-
             <tr>
 
                 <td>
-
                     <b>#${i}</b>
-
                     <br>
-
                     <span class="room">
-
-                    Sala:
-                    ${this.escape(room)}
-
+                        Sala: ${this.escape(room)}
                     </span>
-
                 </td>
 
-
                 <td>
-
-                    <b>
-                    ${this.escape(reg.j1_apodo)}
-                    </b>
-
+                    <b>${this.escape(reg.j1_apodo)}</b>
                     <br>
-
-                    <small>
-                    ID: ${this.escape(reg.j1_id)}
-                    </small>
-
+                    <small>ID: ${this.escape(reg.j1_id)}</small>
                     <br>
-
-                    <small>
-                    WSP: ${this.escape(reg.j1_wsp)}
-                    </small>
-
+                    <small>WSP: ${this.escape(reg.j1_wsp)}</small>
                     <br>
-
-                    <small>
-                    Yape:
-                    ${this.escape(reg.j1_nro_operacion)}
-                    </small>
-
+                    <small>Yape: ${this.escape(reg.j1_nro_operacion)}</small>
                 </td>
 
-
                 <td>
-
                     ${
                         reg.j2_apodo
-
                         ?
-
                         `
-
-                        <b>
-                        ${this.escape(reg.j2_apodo)}
-                        </b>
-
+                        <b>${this.escape(reg.j2_apodo)}</b>
                         <br>
-
-                        <small>
-                        ID:
-                        ${this.escape(reg.j2_id)}
-                        </small>
-
+                        <small>ID: ${this.escape(reg.j2_id)}</small>
                         <br>
-
-                        <small>
-                        WSP:
-                        ${this.escape(reg.j2_wsp)}
-                        </small>
-
+                        <small>WSP: ${this.escape(reg.j2_wsp)}</small>
                         <br>
-
-                        <small>
-                        Yape:
-                        ${this.escape(reg.j2_nro_operacion)}
-                        </small>
-
+                        <small>Yape: ${this.escape(reg.j2_nro_operacion)}</small>
                         `
-
                         :
-
                         `
                         <span class="empty">
-                        Esperando rival...
+                            Esperando rival...
                         </span>
                         `
                     }
-
                 </td>
-
 
                 <td>
-
                     ${j1Badge}
-
                     <br>
-
                     ${j2Badge}
-
                 </td>
-
 
                 <td>
 
                     ${
                         !j1Pago
-
                         ?
-
                         `
-
                         <button
                         class="btn-confirm"
-                        onclick="
-                        AdminApp.confirmarPago(
-                            ${reg.id},
-                            'j1'
-                        )">
-
-                        Confirmar J1
-
+                        onclick="AdminApp.confirmarPago(${reg.id},'j1')">
+                            Confirmar J1
                         </button>
-
                         `
-
                         :
-
                         ''
                     }
-
 
                     ${
-                        reg.j2_apodo &&
-                        !j2Pago
-
+                        reg.j2_apodo && !j2Pago
                         ?
-
                         `
-
                         <button
                         class="btn-confirm"
-                        onclick="
-                        AdminApp.confirmarPago(
-                            ${reg.id},
-                            'j2'
-                        )">
-
-                        Confirmar J2
-
+                        onclick="AdminApp.confirmarPago(${reg.id},'j2')">
+                            Confirmar J2
                         </button>
-
                         `
-
                         :
-
                         ''
                     }
-
 
                     <button
                     class="btn-delete"
-                    onclick="
-                    AdminApp.eliminarDuelo(
-                        ${reg.id}
-                    )">
-
-                    Eliminar
-
+                    onclick="AdminApp.eliminarDuelo(${reg.id})">
+                        Eliminar
                     </button>
 
                 </td>
 
             </tr>
-
             `;
-
         }
-
     },
-
 
     async confirmarPago(id,rol){
 
         const campo =
-        rol==='j1'
-        ? 'j1_pago_confirmado'
-        : 'j2_pago_confirmado';
-
+            rol==='j1'
+            ? 'j1_pago_confirmado'
+            : 'j2_pago_confirmado';
 
         const payload={};
-
         payload[campo]=true;
 
-
         const {error} =
-        await db
-        .from('inscripciones')
-        .update(payload)
-        .eq('id',id);
-
+            await db
+            .from('inscripciones')
+            .update(payload)
+            .eq('id',id);
 
         if(error){
-
             alert(
                 'Error confirmando pago: '+
                 error.message
             );
-
             return;
-
         }
 
-
         await this.cargarTodo();
-
     },
-
 
     async eliminarDuelo(id){
 
-        if(
-            !confirm(
-                '¿Eliminar completamente este duelo?'
-            )
-        )
+        if(!confirm('¿Eliminar completamente este duelo?'))
             return;
 
-
         const {error} =
-        await db
-        .from('inscripciones')
-        .delete()
-        .eq('id',id);
-
+            await db
+            .from('inscripciones')
+            .delete()
+            .eq('id',id);
 
         if(error){
-
             alert(
                 'Error eliminando duelo: '+
                 error.message
             );
-
             return;
-
         }
 
-
         await this.cargarTodo();
-
     },
-
 
     escape(value){
 
@@ -1008,11 +608,8 @@ const AdminApp = {
         .replace(/>/g,'&gt;')
         .replace(/"/g,'&quot;')
         .replace(/'/g,'&#039;');
-
     }
-
 };
-
 
 document.addEventListener(
     'DOMContentLoaded',
